@@ -79,11 +79,30 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
     TEXT_WIDTH  = 60;
     DEFAULT_HEIGHT = 20;
     % Create main main panel
-    jPanelNew = gui_river();
-    jPanelNewL = gui_river();
+    jPanelNew = gui_component('panel');
+    jPanelNew.setBorder(BorderFactory.createEmptyBorder(12,12,12,12));
+    % Bottom panel: 'Expert', 'Cancel', 'OK' buttons
+    jPanelNewB = gui_river([1,1], [0,6,6,6]);
+    jPanelNew.add(jPanelNewB, BorderLayout.SOUTH);
+    % Left panel:   1:Choose method, 2:Left parameters
+    jPanelNewL = java_create('javax.swing.JPanel');
+    jPanelNewL.setLayout(GridBagLayout());
+    % Add left panel to main panel
+    jPanelNew.add(jPanelNewL, BorderLayout.WEST);
+    % Right panel:  Right parameters
+    jPanelNewR = java_create('javax.swing.JPanel');
+    jPanelNewR.setLayout(GridBagLayout());
+    % Default grid bag constrains
+    c = GridBagConstraints();
+    c.fill    = GridBagConstraints.HORIZONTAL;
+    c.weightx = 1;
+    c.weighty = 0;
+    % Counters for elements in panel L and R
+    gridyL = 1;
+    gridyR = 1;
+
     
-    
-    %% --------------------- REGULAR OPTIONS PANEL --------------------- %%
+    %% --------------------- REGULAR OPTIONS PANEL (LEFT) --------------------- %%
     
         % ===== MEM METHOD =====
         JPanelMemType = gui_river([1,1], [0, 6, 6, 6], 'MEM type');
@@ -130,10 +149,10 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
         JPanelMemType.add('br', jMEMr);
         JPanelMemType.add('tab', JLabel('(wavelet representation)'));
         
-        % Add 'Method' panel to main panel (jPanelNew)
-        jPanelNewL.add('br hfill', JPanelMemType);
-        
-        
+        % Add 'Method' panel to left panel (jPanelNewL)
+        c.gridy = gridyL;
+        jPanelNewL.add(JPanelMemType, c);
+        gridyL = gridyL + 1;
         
         % ===== PARAMETERS =====
         if isfield(OPTIONS.mandatory, 'pipeline') && any( strcmp(OPTIONS.mandatory.pipeline, {'cMEM','wMEM','rMEM'}) )
@@ -262,9 +281,10 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
             JPanelparam.add(jTextBSLStop);
             JPanelparam.add('tab', JLabel('s'));
             
-            % Add 'Method' panel to main panel (jPanelNew)
-            jPanelNewL.add('br hfill', JPanelparam);
-            
+            % Add 'Data definition' panel to left panel (jPanelNewL)
+            c.gridy = gridyL;
+            jPanelNewL.add(JPanelparam, c);
+            gridyL = gridyL + 1;
         else
             
             MEMglobal                   =   struct;
@@ -349,8 +369,10 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
             jTextLoadAutoBsl = jfakebutton;
 			
             
-            % Add 'Method' panel to main panel (jPanelNew)
-            jPanelNewL.add('br hfill', JPanelparam);
+            % Add 'References' panel to left panel (jPanelNewL)
+            c.gridy = gridyL;
+            jPanelNewL.add(JPanelparam, c);
+            gridyL = gridyL + 1;
         end
         
         % ===== WAVELET OPTIONS ====
@@ -368,7 +390,10 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
             JPanelnwav.add('tab hfill', jBoxWAVsc);
             
             if ~firstCall
-                jPanelNewL.add('br hfill', JPanelnwav); 
+                % Add 'Oscilations' panel to left panel (jPanelNewL)
+                c.gridy = gridyL;
+                jPanelNewL.add(JPanelnwav, c);
+                gridyL = gridyL + 1;
             end
             
         elseif jMEMr.isSelected()
@@ -392,7 +417,10 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
             JPanelnwav.add('tab', jTxtRmd);
             
             if ~firstCall
-                jPanelNewL.add('br hfill', JPanelnwav); 
+                % Add 'Synchrony' panel to left panel (jPanelNewL)
+                c.gridy = gridyL;
+                jPanelNewL.add(JPanelnwav, c);
+                gridyL = gridyL + 1;
             end
         end                   
             
@@ -489,7 +517,10 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
         JPanelCLSType.add('tab', jTextNeighbor);
         
         if ~firstCall
-            jPanelNewL.add('br hfill', JPanelCLSType); 
+            % Add 'Clustering' panel to left panel (jPanelNewL)
+            c.gridy = gridyL;
+            jPanelNewL.add(JPanelCLSType, c);
+            gridyL = gridyL + 1;
         end
         
         % Spatial smoothing
@@ -556,16 +587,15 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
             JPanelGRP.add('tab', JW);
             
             if ~firstCall
-                jPanelNewL.add('br hfill', JPanelGRP); 
+                % Add 'Group analysis' panel to left panel (jPanelNewL)
+                c.gridy = gridyL;
+                jPanelNewL.add(JPanelGRP, c);
+                gridyL = gridyL + 1;
             end
         end
-               
-        jPanelNew.add('br hfill', jPanelNewL);    
-    %% ----------------------------------------------------------------- %%
-     
-    
-    jPanelNewR = gui_river();
 
+
+    %% --------------------- EXPERT OPTIONS PANEL (RIGHT) --------------------- %%
 
     % ===== depth-weighting METHOD =====
     JPanelDepth = gui_river([1,1], [0, 6, 6, 6], 'Depth-weighting');
@@ -591,7 +621,10 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
     JPanelDepth.add('p left', JLabel('Weight for MEM:') );
     JPanelDepth.add('tab', jTxtDepthMEM);
 
-    jPanelNewR.add('br hfill', JPanelDepth);
+    % Add 'Depth-weighting' panel to right panel (jPanelNewR)
+    c.gridy = gridyR;
+    jPanelNewR.add(JPanelDepth, c);
+    gridyR = gridyR + 1;
 
 
 
@@ -764,8 +797,11 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
     % Inactive var
     jPanelModP.add('p left', JLabel('Inactive variance coeff.') );
     jPanelModP.add('tab', jTxtInactV);
-    % Add priors to panel
-    jPanelNewR.add('br hfill', jPanelModP);
+
+    % Add 'Model priors' panel to right panel (jPanelNewR)
+    c.gridy = gridyR;
+    jPanelNewR.add(jPanelModP, c);
+    gridyR = gridyR + 1;
 
     % Solver
     jPanelSensC = gui_river([1,1], [0, 6, 6, 6], 'Solver options');
@@ -791,29 +827,53 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
     % Matrix type
     jPanelSensC.add('p left', JLabel('Covariance matrix type') );
     jPanelSensC.add('tab tab', jTxtVCOV);
-    % Add priors to panel
-    jPanelNewR.add('br hfill', jPanelSensC);
+
+    % Add 'Solver' panel to right panel (jPanelNewR)
+    c.gridy = gridyR;
+    jPanelNewR.add(jPanelSensC, c);
+    gridyR = gridyR + 1;
 
     if strcmp(OPTIONS.mandatory.pipeline, 'wMEM')
-        % Add priors to panel
-        jPanelNewR.add('br hfill', jPanelWAV);
+        % Add 'Wavelets' panel to right panel (jPanelNewR)
+        c.gridy = gridyR;
+        jPanelNewR.add(jPanelWAV, c);
+        gridyR = gridyR + 1;
     elseif strcmp(OPTIONS.mandatory.pipeline, 'rMEM')            
-        % Add priors to panel
-        jPanelNewR.add('br hfill', jPanelWAV);
-        jPanelNewR.add('br hfill', jPanelRDG);
+        % Add 'Wavelets' panel to right panel (jPanelNewR)
+        c.gridy = gridyR;
+        jPanelNewR.add(jPanelWAV, c);
+        gridyR = gridyR + 1;
+        % Add 'Ridge' panel to right panel (jPanelNewR)
+        c.gridy = gridyR;
+        jPanelNewR.add(jPanelRDG, c);
+        gridyR = gridyR + 1;
     end
         
     if ~firstCall
-        jPanelNew.add('right', jPanelNewR);
+        % Add right panel to main panel
+        jPanelNew.add(jPanelNewR, BorderLayout.EAST);
+        % Add glue where needed
+        if strcmp(OPTIONS.mandatory.pipeline, 'rMEM')
+            % Add a glue at the bottom of the left panel to match right panel
+            c.gridy   = gridyL;
+            c.weighty = 1;
+            jPanelNewL.add(Box.createVerticalGlue(), c);
+        else
+            % Add a glue at the bottom of the rigth panel to match left panel
+            c.gridy   = gridyR;
+            c.weighty = 1;
+            jPanelNewR.add(Box.createVerticalGlue(), c);
+        end
     end
+
 
     %% ----------------------------------------------------------------- %%
 
     % ===== VALIDATION BUTTONS =====
     if OPTIONS.automatic.MEMexpert
-        JButEXP = gui_component('button', jPanelNew, 'br center', 'Normal', [], [], @SwitchExpertMEM, []);
+        JButEXP = gui_component('button', jPanelNewB, 'br center', 'Normal', [], [], @SwitchExpertMEM, []);
     else
-        JButEXP = gui_component('button', jPanelNew, 'br center', 'Expert', [], [], @SwitchExpertMEM, []);
+        JButEXP = gui_component('button', jPanelNewB, 'br center', 'Expert', [], [], @SwitchExpertMEM, []);
     end
         
     if ~any([jMEMdef.isSelected() jMEMw.isSelected() jMEMr.isSelected()])
@@ -828,8 +888,8 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
         if exist('jPanelRDG', 'var'); jPanelRDG.setVisible(0); end;
     end
 
-    gui_component('button', jPanelNew, [], 'Cancel', [], [], @ButtonCancel_Callback, []);
-    JButOK = gui_component('button', jPanelNew, [], 'OK', [], [], @ButtonOk_Callback, []);
+    gui_component('button', jPanelNewB, [], 'Cancel', [], [], @ButtonCancel_Callback, []);
+    JButOK = gui_component('button', jPanelNewB, [], 'OK', [], [], @ButtonOk_Callback, []);
     JButOK.setEnabled(0);
     
     % ===== PANEL CREATION =====
